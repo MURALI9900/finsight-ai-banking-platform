@@ -5,5 +5,5 @@ spring:
     name: auth-service
 finsight:
   jwt:
-    secret: "FinSightDemoJwtSecretKey-ChangeThisInProduction-2026"
-    expiration-seconds: 3600
+    secret: ${FINSIGHT_JWT_SECRET:}
+    expiration-seconds: ${FINSIGHT_JWT_EXPIRATION_SECONDS:3600}
