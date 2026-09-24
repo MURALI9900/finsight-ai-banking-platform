@@ -5,12 +5,12 @@ spring:
   application:
     name: ai-service
   datasource:
-    url: jdbc:postgresql://localhost:5432/finsight
-    username: finsight
-    password: finsight
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/finsight}
+    username: ${SPRING_DATASOURCE_USERNAME:finsight}
+    password: ${SPRING_DATASOURCE_PASSWORD:finsight}
 
 finsight:
-  banking-service-url: http://localhost:8081
+  banking-service-url: ${FINSIGHT_BANKING_SERVICE_URL:http://localhost:8081}
   llm:
     base-url: ${LLM_BASE_URL:https://api.openai.com/v1}
     api-key: ${OPENAI_API_KEY:}
