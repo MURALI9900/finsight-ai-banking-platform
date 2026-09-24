@@ -1,0 +1,89 @@
+name: FinSight CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend:
+    name: Backend - ${{ matrix.service }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - api-gateway
+          - auth-service
+          - banking-operations-service
+          - customer-service
+          - ai-service
+          - audit-service
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Run tests
+        working-directory: backend/${{ matrix.service }}
+        run: mvn -B test
+
+  frontend:
+    name: Frontend - Angular
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        working-directory: frontend/officer-portal
+        run: npm install
+
+      - name: Build Angular application
+        working-directory: frontend/officer-portal
+        run: npm run build
+
+  docker:
+    name: Docker build - ${{ matrix.name }}
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: api-gateway
+            path: backend/api-gateway
+          - name: auth-service
+            path: backend/auth-service
+          - name: banking-operations-service
+            path: backend/banking-operations-service
+          - name: customer-service
+            path: backend/customer-service
+          - name: ai-service
+            path: backend/ai-service
+          - name: audit-service
+            path: backend/audit-service
+          - name: officer-portal
+            path: frontend/officer-portal
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.path }}
+          push: false
+          tags: finsight/${{ matrix.name }}:ci
