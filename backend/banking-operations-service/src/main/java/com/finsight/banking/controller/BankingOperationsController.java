@@ -3,10 +3,7 @@ package com.finsight.banking.controller;
 import com.finsight.banking.model.LoanRecord;
 import com.finsight.banking.model.TransactionRecord;
 import com.finsight.banking.service.BankingOperationsService;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -15,7 +12,6 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/v1/banking")
 public class BankingOperationsController {
-
     private final BankingOperationsService service;
 
     public BankingOperationsController(BankingOperationsService service) {
@@ -23,25 +19,26 @@ public class BankingOperationsController {
     }
 
     @GetMapping("/loans")
-    public List<LoanRecord> loans() {
-        return service.getLoans();
-    }
+    public List<LoanRecord> loans() { return service.getLoans(); }
+
+    @GetMapping("/loans/{loanId}")
+    public LoanRecord loan(@PathVariable String loanId) { return service.getLoan(loanId); }
 
     @GetMapping("/loans/overdue")
-    public List<LoanRecord> overdueLoans(
-            @RequestParam(defaultValue = "30") int minimumDays) {
+    public List<LoanRecord> overdueLoans(@RequestParam(defaultValue = "30") int minimumDays) {
         return service.getOverdueLoans(minimumDays);
     }
 
     @GetMapping("/transactions")
-    public List<TransactionRecord> transactions() {
-        return service.getTransactions();
+    public List<TransactionRecord> transactions() { return service.getTransactions(); }
+
+    @GetMapping("/transactions/{transactionId}")
+    public TransactionRecord transaction(@PathVariable String transactionId) {
+        return service.getTransaction(transactionId);
     }
 
     @GetMapping("/transactions/failed")
-    public List<TransactionRecord> failedTransactions() {
-        return service.getFailedTransactions();
-    }
+    public List<TransactionRecord> failedTransactions() { return service.getFailedTransactions(); }
 
     @GetMapping("/summary")
     public Map<String, Object> summary() {
