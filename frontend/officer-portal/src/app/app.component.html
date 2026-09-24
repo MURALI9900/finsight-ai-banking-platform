@@ -1,0 +1,55 @@
+<main class="shell">
+  <section *ngIf="!token" class="login-card">
+    <div class="brand">FinSight AI</div>
+    <h1>Banking Operations Portal</h1>
+    <p>Secure workspace for authorized bank officers.</p>
+    <input [(ngModel)]="username" placeholder="Officer username">
+    <input [(ngModel)]="password" type="password" placeholder="Password">
+    <button (click)="login()">Sign in</button>
+    <small>Demo: ops.officer / Demo@123</small>
+    <div class="error" *ngIf="error">{{ error }}</div>
+  </section>
+
+  <section *ngIf="token" class="dashboard">
+    <header>
+      <div><strong>FinSight AI</strong><span> Officer Operations</span></div>
+      <button class="secondary" (click)="logout()">Logout</button>
+    </header>
+
+    <div class="grid">
+      <section class="panel">
+        <h2>AI Operations Assistant</h2>
+        <p>Ask about overdue loans, failed transactions, or an operations summary.</p>
+        <textarea [(ngModel)]="question" rows="4"
+          placeholder="Show me loans overdue by more than 30 days"></textarea>
+        <button (click)="ask()" [disabled]="loading">{{ loading ? 'Analyzing...' : 'Ask FinSight AI' }}</button>
+
+        <article *ngIf="ai" class="answer">
+          <h3>Answer</h3>
+          <p>{{ ai.answer }}</p>
+          <div class="meta">Intent: {{ ai.intent }} · Tool: {{ ai.toolUsed }}</div>
+          <div class="sources" *ngIf="ai.sources.length">
+            Sources: {{ ai.sources.join(', ') }}
+          </div>
+          <pre>{{ ai.data | json }}</pre>
+        </article>
+      </section>
+
+      <section class="panel">
+        <h2>Loan Operations</h2>
+        <table *ngIf="loans.length; else noLoans">
+          <thead><tr><th>Loan</th><th>Customer</th><th>Outstanding</th><th>Overdue</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let loan of loans">
+              <td>{{ loan.loanId }}</td><td>{{ loan.customerName }}</td>
+              <td>{{ loan.outstandingAmount | number:'1.0-0' }}</td>
+              <td>{{ loan.daysOverdue }} days</td><td>{{ loan.status }}</td>
+            </tr>
+          </tbody>
+        </table>
+        <ng-template #noLoans>No loan records available.</ng-template>
+      </section>
+    </div>
+    <div class="error" *ngIf="error">{{ error }}</div>
+  </section>
+</main>
