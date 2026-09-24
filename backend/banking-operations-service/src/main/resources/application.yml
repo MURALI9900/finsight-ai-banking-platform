@@ -5,9 +5,9 @@ spring:
   application:
     name: banking-operations-service
   datasource:
-    url: jdbc:postgresql://localhost:5432/finsight
-    username: finsight
-    password: finsight
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/finsight}
+    username: ${SPRING_DATASOURCE_USERNAME:finsight}
+    password: ${SPRING_DATASOURCE_PASSWORD:finsight}
   jpa:
     hibernate:
       ddl-auto: update
@@ -20,4 +20,4 @@ spring:
 
 finsight:
   kafka:
-    topic: banking.operations.events
+    topic: ${KAFKA_TOPIC:banking.operations.events}
