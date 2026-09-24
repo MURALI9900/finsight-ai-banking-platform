@@ -32,6 +32,8 @@ services:
     build: ../../backend/auth-service
     ports:
       - "8083:8083"
+    environment:
+      FINSIGHT_JWT_SECRET: ${FINSIGHT_JWT_SECRET:-FinSightDemoJwtSecretKey-ChangeThisInProduction-2026}
 
   banking-operations-service:
     build: ../../backend/banking-operations-service
@@ -68,6 +70,8 @@ services:
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/finsight
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-finsight}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-finsight}
     depends_on:
       - postgres
       - kafka
@@ -78,6 +82,7 @@ services:
       - "8080:8080"
     environment:
       FINSIGHT_AUTH_SERVICE_URL: http://auth-service:8083
+      FINSIGHT_JWT_SECRET: ${FINSIGHT_JWT_SECRET:-FinSightDemoJwtSecretKey-ChangeThisInProduction-2026}
       FINSIGHT_BANKING_SERVICE_URL: http://banking-operations-service:8081
       FINSIGHT_CUSTOMER_SERVICE_URL: http://customer-service:8082
       FINSIGHT_AI_SERVICE_URL: http://ai-service:8084
