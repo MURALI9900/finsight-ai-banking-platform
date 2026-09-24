@@ -1,0 +1,7 @@
+server:
+  port: 8084
+spring:
+  application:
+    name: ai-service
+finsight:
+  banking-service-url: http://localhost:8081
