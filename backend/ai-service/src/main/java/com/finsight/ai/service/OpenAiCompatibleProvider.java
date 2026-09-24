@@ -19,39 +19,50 @@ public class OpenAiCompatibleProvider implements AiProvider {
 
     @Override
     public String generateAnswer(String question, String toolResult) {
+        return generateAnswer(question, toolResult, List.of());
+    }
+
+    public String generateAnswer(String question, String toolResult, List<RagDocument> context) {
         if (!properties.configured()) {
             return toolResult + " (LLM not configured; using safe demo response.)";
         }
 
+        String ragContext = context.isEmpty() ? "No policy context matched." :
+                context.stream()
+                    .map(d -> "[" + d.id() + "] " + d.title() + ": " + d.content())
+                    .reduce("", (a, b) -> a + "\n" + b);
+
         String system = "You are FinSight AI, a banking operations assistant for authorized bank officers. "
-                + "Answer only from the supplied banking tool result. Do not invent facts. "
-                + "Be concise and explain that the result came from an approved banking tool.";
+                + "Answer only from the supplied banking tool result and policy context. "
+                + "Do not invent facts. If policy context is insufficient, say so. "
+                + "Keep the response concise and mention relevant policy IDs when useful.";
 
         Map<String, Object> request = Map.of(
                 "model", properties.model(),
                 "messages", List.of(
                         Map.of("role", "system", "content", system),
                         Map.of("role", "user", "content",
-                                "Officer question: " + question + "\nApproved tool result: " + toolResult)
+                                "Officer question: " + question
+                                + "\nApproved banking tool result: " + toolResult
+                                + "\nRetrieved policy context:" + ragContext)
                 ),
                 "temperature", 0.1
         );
 
-        Map<String, Object> response = client.post()
-                .uri("/chat/completions")
-                .header("Authorization", "Bearer " + properties.apiKey())
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(request)
-                .retrieve()
-                .body(Map.class);
-
         try {
+            Map<String, Object> response = client.post()
+                    .uri("/chat/completions")
+                    .header("Authorization", "Bearer " + properties.apiKey())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(request)
+                    .retrieve()
+                    .body(Map.class);
+
             List<Map<String, Object>> choices = (List<Map<String, Object>>) response.get("choices");
             Map<String, Object> message = choices.get(0);
-            Map<String, Object> content = (Map<String, Object>) message.get("message");
-            return String.valueOf(content.get("content"));
+            return String.valueOf(message.get("message") instanceof Map<?, ?> m ? m.get("content") : "No content");
         } catch (Exception ex) {
-            return "The LLM response could not be parsed. Approved banking result: " + toolResult;
+            return "The LLM is unavailable. Approved banking result: " + toolResult;
         }
     }
 }
