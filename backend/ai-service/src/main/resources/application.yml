@@ -4,6 +4,10 @@ server:
 spring:
   application:
     name: ai-service
+  datasource:
+    url: jdbc:postgresql://localhost:5432/finsight
+    username: finsight
+    password: finsight
 
 finsight:
   banking-service-url: http://localhost:8081
@@ -11,3 +15,4 @@ finsight:
     base-url: ${LLM_BASE_URL:https://api.openai.com/v1}
     api-key: ${OPENAI_API_KEY:}
     model: ${OPENAI_MODEL:}
+    embedding-model: ${OPENAI_EMBEDDING_MODEL:text-embedding-3-small}
