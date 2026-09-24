@@ -4,3 +4,11 @@ server:
 spring:
   application:
     name: banking-operations-service
+  datasource:
+    url: jdbc:postgresql://localhost:5432/finsight
+    username: finsight
+    password: finsight
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
