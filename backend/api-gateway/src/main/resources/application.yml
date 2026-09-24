@@ -36,4 +36,4 @@ spring:
             - JwtGateway
 finsight:
   jwt:
-    secret: "FinSightDemoJwtSecretKey-ChangeThisInProduction-2026"
+    secret: ${FINSIGHT_JWT_SECRET:}
