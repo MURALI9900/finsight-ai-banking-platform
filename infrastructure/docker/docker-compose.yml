@@ -33,7 +33,7 @@ services:
     ports:
       - "8083:8083"
     environment:
-      FINSIGHT_JWT_SECRET: ${FINSIGHT_JWT_SECRET:-FinSightDemoJwtSecretKey-ChangeThisInProduction-2026}
+      FINSIGHT_JWT_SECRET: ${FINSIGHT_JWT_SECRET:?Set FINSIGHT_JWT_SECRET in your environment}
 
   banking-operations-service:
     build: ../../backend/banking-operations-service
