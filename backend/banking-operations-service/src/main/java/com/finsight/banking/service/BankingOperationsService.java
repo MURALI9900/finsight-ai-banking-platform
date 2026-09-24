@@ -1,53 +1,65 @@
 package com.finsight.banking.service;
 
+import com.finsight.banking.model.LoanEntity;
 import com.finsight.banking.model.LoanRecord;
+import com.finsight.banking.model.TransactionEntity;
 import com.finsight.banking.model.TransactionRecord;
+import com.finsight.banking.repository.LoanRepository;
+import com.finsight.banking.repository.TransactionRepository;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
 public class BankingOperationsService {
+    private final LoanRepository loans;
+    private final TransactionRepository transactions;
 
-    private final List<LoanRecord> loans = List.of(
-            new LoanRecord("LN1001", "C1001", "Arun Kumar", new BigDecimal("185000.00"), 42, "OVERDUE"),
-            new LoanRecord("LN1002", "C1002", "Priya Sharma", new BigDecimal("92000.00"), 12, "OVERDUE"),
-            new LoanRecord("LN1003", "C1003", "Rahul Verma", new BigDecimal("0.00"), 0, "CLOSED"),
-            new LoanRecord("LN1004", "C1004", "Sara Joseph", new BigDecimal("340000.00"), 67, "OVERDUE")
-    );
-
-    private final List<TransactionRecord> transactions = List.of(
-            new TransactionRecord("TXN9001", "C1001", new BigDecimal("15000.00"), "LOAN_REPAYMENT", "SUCCESS", null, LocalDateTime.now().minusHours(2)),
-            new TransactionRecord("TXN9002", "C1002", new BigDecimal("8500.00"), "LOAN_REPAYMENT", "FAILED", "Insufficient available balance", LocalDateTime.now().minusHours(3)),
-            new TransactionRecord("TXN9003", "C1004", new BigDecimal("12000.00"), "LOAN_REPAYMENT", "FAILED", "Core banking timeout", LocalDateTime.now().minusHours(5)),
-            new TransactionRecord("TXN9004", "C1003", new BigDecimal("5000.00"), "TRANSFER", "SUCCESS", null, LocalDateTime.now().minusHours(1))
-    );
+    public BankingOperationsService(LoanRepository loans, TransactionRepository transactions) {
+        this.loans = loans;
+        this.transactions = transactions;
+    }
 
     public List<LoanRecord> getLoans() {
-        return loans;
+        return loans.findAll().stream().map(this::toRecord).toList();
+    }
+
+    public LoanRecord getLoan(String loanId) {
+        return loans.findById(loanId).map(this::toRecord)
+                .orElseThrow(() -> new IllegalArgumentException("Loan not found: " + loanId));
     }
 
     public List<LoanRecord> getOverdueLoans(int minimumDays) {
-        return loans.stream()
-                .filter(loan -> loan.daysOverdue() > minimumDays)
-                .toList();
+        return loans.findByDaysOverdueGreaterThan(minimumDays).stream().map(this::toRecord).toList();
     }
 
     public List<TransactionRecord> getTransactions() {
-        return transactions;
+        return transactions.findAll().stream().map(this::toRecord).toList();
+    }
+
+    public TransactionRecord getTransaction(String transactionId) {
+        return transactions.findById(transactionId).map(this::toRecord)
+                .orElseThrow(() -> new IllegalArgumentException("Transaction not found: " + transactionId));
     }
 
     public List<TransactionRecord> getFailedTransactions() {
-        return transactions.stream()
-                .filter(tx -> "FAILED".equalsIgnoreCase(tx.status()))
-                .toList();
+        return transactions.findByStatusIgnoreCase("FAILED").stream().map(this::toRecord).toList();
     }
 
     public BigDecimal getTotalOutstanding() {
-        return loans.stream()
-                .map(LoanRecord::outstandingAmount)
+        return loans.findAll().stream()
+                .map(LoanEntity::getOutstandingAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    private LoanRecord toRecord(LoanEntity e) {
+        return new LoanRecord(e.getLoanId(), e.getCustomerId(), e.getCustomerName(),
+                e.getOutstandingAmount(), e.getDaysOverdue(), e.getStatus());
+    }
+
+    private TransactionRecord toRecord(TransactionEntity e) {
+        return new TransactionRecord(e.getTransactionId(), e.getCustomerId(), e.getAmount(),
+                e.getType(), e.getStatus(), e.getFailureReason(), e.getCreatedAt());
     }
 }
