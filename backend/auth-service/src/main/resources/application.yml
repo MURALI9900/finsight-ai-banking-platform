@@ -1,0 +1,9 @@
+server:
+  port: 8083
+spring:
+  application:
+    name: auth-service
+finsight:
+  jwt:
+    secret: "FinSightDemoJwtSecretKey-ChangeThisInProduction-2026"
+    expiration-seconds: 3600
