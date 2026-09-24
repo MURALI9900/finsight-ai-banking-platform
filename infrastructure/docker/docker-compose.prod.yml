@@ -1,0 +1,97 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg17
+    container_name: finsight-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-finsight}
+      POSTGRES_USER: ${POSTGRES_USER:-finsight}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in your environment}
+    volumes:
+      - finsight-postgres-data:/var/lib/postgresql/data
+
+  kafka:
+    image: apache/kafka:4.1.0
+    container_name: finsight-kafka
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+
+  auth-service:
+    build: ../../backend/auth-service
+    environment:
+      FINSIGHT_JWT_SECRET: ${FINSIGHT_JWT_SECRET:?Set FINSIGHT_JWT_SECRET in your environment}
+
+  banking-operations-service:
+    build: ../../backend/banking-operations-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-finsight}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-finsight}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in your environment}
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    depends_on:
+      - postgres
+      - kafka
+
+  customer-service:
+    build: ../../backend/customer-service
+
+  ai-service:
+    build: ../../backend/ai-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-finsight}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-finsight}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in your environment}
+      FINSIGHT_BANKING_SERVICE_URL: http://banking-operations-service:8081
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-}
+      OPENAI_EMBEDDING_MODEL: ${OPENAI_EMBEDDING_MODEL:-text-embedding-3-small}
+    depends_on:
+      - postgres
+      - banking-operations-service
+
+  audit-service:
+    build: ../../backend/audit-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-finsight}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-finsight}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in your environment}
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    depends_on:
+      - postgres
+      - kafka
+
+  api-gateway:
+    build: ../../backend/api-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      FINSIGHT_AUTH_SERVICE_URL: http://auth-service:8083
+      FINSIGHT_JWT_SECRET: ${FINSIGHT_JWT_SECRET:?Set FINSIGHT_JWT_SECRET in your environment}
+      FINSIGHT_BANKING_SERVICE_URL: http://banking-operations-service:8081
+      FINSIGHT_CUSTOMER_SERVICE_URL: http://customer-service:8082
+      FINSIGHT_AI_SERVICE_URL: http://ai-service:8084
+      FINSIGHT_AUDIT_SERVICE_URL: http://audit-service:8085
+    depends_on:
+      - auth-service
+      - banking-operations-service
+      - customer-service
+      - ai-service
+      - audit-service
+
+  officer-portal:
+    build: ../../frontend/officer-portal
+    ports:
+      - "4200:80"
+    depends_on:
+      - api-gateway
+
+volumes:
+  finsight-postgres-data:
