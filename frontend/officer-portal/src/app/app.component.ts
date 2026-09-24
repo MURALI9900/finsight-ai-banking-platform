@@ -19,7 +19,7 @@ type AiResponse = {
   styleUrl: './app.component.css'
 })
 export class AppComponent {
-  private readonly gateway = 'http://localhost:8080';
+  private readonly gateway = '';
   username = '';
   password = '';
   token = '';
