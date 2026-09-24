@@ -1,10 +1,8 @@
 package com.finsight.ai.service;
 
 import org.springframework.stereotype.Service;
-
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 
 @Service
 public class QueryIntentService {
@@ -25,25 +23,21 @@ public class QueryIntentService {
         if (q.contains("overdue") || q.contains("over due")) {
             int days = extractDays(q, 30);
             var data = tools.overdueLoans(days);
-            String result = "Found " + data.size() + " loan(s) overdue by more than " + days + " days.";
-            return new QueryResult(generate(question, result, context), "OVERDUE_LOANS", "getOverdueLoans", data);
+            return new QueryResult(generate(question, "Found " + data.size() + " loan(s) overdue by more than " + days + " days.", context),
+                    "OVERDUE_LOANS", "getOverdueLoans", data, context.stream().map(RagDocument::id).toList());
         }
-
         if (q.contains("failed") && (q.contains("transaction") || q.contains("payment"))) {
             var data = tools.failedTransactions();
-            String result = "Found " + data.size() + " failed transaction(s).";
-            return new QueryResult(generate(question, result, context), "FAILED_TRANSACTIONS", "getFailedTransactions", data);
+            return new QueryResult(generate(question, "Found " + data.size() + " failed transaction(s).", context),
+                    "FAILED_TRANSACTIONS", "getFailedTransactions", data, context.stream().map(RagDocument::id).toList());
         }
-
         if (q.contains("summary") || q.contains("total") || q.contains("overview")) {
             var data = tools.summary();
             return new QueryResult(generate(question, "Here is the current banking operations summary.", context),
-                    "BANKING_SUMMARY", "getBankingSummary", List.of(data));
+                    "BANKING_SUMMARY", "getBankingSummary", List.of(data), context.stream().map(RagDocument::id).toList());
         }
-
-        return new QueryResult(
-                "I could not map the question to an approved banking operation. Try asking about overdue loans, failed transactions, or a banking summary.",
-                "UNKNOWN", "NONE", List.of());
+        return new QueryResult("I could not map the question to an approved banking operation. Try asking about overdue loans, failed transactions, or a banking summary.",
+                "UNKNOWN", "NONE", List.of(), context.stream().map(RagDocument::id).toList());
     }
 
     private String generate(String question, String toolResult, List<RagDocument> context) {
@@ -64,5 +58,5 @@ public class QueryIntentService {
         return fallback;
     }
 
-    public record QueryResult(String answer, String intent, String toolUsed, List<?> data) {}
+    public record QueryResult(String answer, String intent, String toolUsed, List<?> data, List<String> sources) {}
 }
