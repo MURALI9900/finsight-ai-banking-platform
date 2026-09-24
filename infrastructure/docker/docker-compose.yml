@@ -38,6 +38,7 @@ services:
     ports:
       - "8081:8081"
     environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/finsight
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
     depends_on:
       - postgres
@@ -53,6 +54,8 @@ services:
     ports:
       - "8084:8084"
     environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/finsight
+      FINSIGHT_BANKING_SERVICE_URL: http://banking-operations-service:8081
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
     depends_on:
       - postgres
@@ -63,6 +66,7 @@ services:
     ports:
       - "8085:8085"
     environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/finsight
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
     depends_on:
       - postgres
@@ -72,6 +76,12 @@ services:
     build: ../../backend/api-gateway
     ports:
       - "8080:8080"
+    environment:
+      FINSIGHT_AUTH_SERVICE_URL: http://auth-service:8083
+      FINSIGHT_BANKING_SERVICE_URL: http://banking-operations-service:8081
+      FINSIGHT_CUSTOMER_SERVICE_URL: http://customer-service:8082
+      FINSIGHT_AI_SERVICE_URL: http://ai-service:8084
+      FINSIGHT_AUDIT_SERVICE_URL: http://audit-service:8085
     depends_on:
       - auth-service
       - banking-operations-service
