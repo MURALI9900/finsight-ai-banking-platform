@@ -7,25 +7,31 @@ spring:
     gateway:
       routes:
         - id: auth-service
-          uri: http://localhost:8083
+          uri: ${FINSIGHT_AUTH_SERVICE_URL:http://localhost:8083}
           predicates:
             - Path=/api/v1/auth/**
         - id: banking-operations-service
-          uri: http://localhost:8081
+          uri: ${FINSIGHT_BANKING_SERVICE_URL:http://localhost:8081}
           predicates:
             - Path=/api/v1/banking/**,/api/v1/system/**
           filters:
             - JwtGateway
         - id: customer-service
-          uri: http://localhost:8082
+          uri: ${FINSIGHT_CUSTOMER_SERVICE_URL:http://localhost:8082}
           predicates:
             - Path=/api/v1/customers/**
           filters:
             - JwtGateway
         - id: ai-service
-          uri: http://localhost:8084
+          uri: ${FINSIGHT_AI_SERVICE_URL:http://localhost:8084}
           predicates:
             - Path=/api/v1/ai/**
+          filters:
+            - JwtGateway
+        - id: audit-service
+          uri: ${FINSIGHT_AUDIT_SERVICE_URL:http://localhost:8085}
+          predicates:
+            - Path=/api/v1/audit/**
           filters:
             - JwtGateway
 finsight:
